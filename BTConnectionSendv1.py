@@ -94,6 +94,7 @@ def expense(data, sendValue):
             print(sendValue)
             refresh(data, sendValue)
         if (send == False):
+            return sendValue
             break
         time.sleep(0.3)
         
@@ -125,8 +126,9 @@ def runServer():
     # Special Code
     draw_rotated_text(disp.buffer, data[2], (70, 80), 90, font, fill=(255,255,255))
     draw_rotated_text(disp.buffer, 'Expense: ' + str(sendValue), (110, 90), 90, font, fill=(255,255,255))
-    expense(data, 0)
+    exp = expense(data, 0)
     disp.display()
-    inputSocket.close()
+    print(exp)
+    inputSocket.send(str(exp).encode())
     serverSocket.close()
 runServer()
