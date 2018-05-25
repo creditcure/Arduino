@@ -13,6 +13,28 @@ DC = 18
 RST = 23
 SPI_PORT = 0
 SPI_DEVICE = 0
+LedPin11, LedPin13, LedPin15 = 11, 13, 15
+
+def setup():
+    GPIO.setmode(GPIO.BOARD)       # Numbers GPIOs by physical location
+    GPIO.setup(LedPin11, GPIO.OUT)   # Set LedPin's mode is output
+    GPIO.setup(LedPin13, GPIO.OUT)   # Set LedPin's mode is output
+    GPIO.setup(LedPin15, GPIO.OUT)   # Set LedPin's mode is output
+    GPIO.output(LedPin11, GPIO.LOW) # Set LedPin high(+3.3V) to turn on led
+    GPIO.output(LedPin13, GPIO.LOW)  # led on
+    GPIO.output(LedPin15, GPIO.LOW)  # led on
+
+def blink(led):
+  while True:
+    GPIO.output(led, GPIO.HIGH)  # led on
+    time.sleep(1)
+    GPIO.output(led, GPIO.LOW) # led off
+    time.sleep(1)
+def destroy():
+    GPIO.output(LedPin11, GPIO.LOW) # led off
+    GPIO.output(LedPin13, GPIO.LOW)  # led off
+    GPIO.output(LedPin15, GPIO.LOW)  # led off
+    GPIO.cleanup()                  # Release resource
 
 # Create TFT LCD display class.
 disp = TFT.ILI9341(DC, rst=RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=64000000))
@@ -22,7 +44,7 @@ disp.begin()
 
 # Clear the display to a red background.
 # Can pass any tuple of red, green, blue values (from 0 to 255 each).
-disp.clear((255, 0, 0))
+disp.clear((102, 153, 204))
 
 # Alternatively can clear to a black screen by calling:
 # disp.clear()
@@ -30,9 +52,8 @@ disp.clear((255, 0, 0))
 # Load default font.
 font = ImageFont.load_default()
 
-# Alternatively load a TTF font.
-# Some other nice fonts to try: http://www.dafont.com/bitmap.php
-#font = ImageFont.truetype('Minecraftia.ttf', 46)
+# Alternative Font
+font = ImageFont.truetype('/home/pi/Desktop/verdana.ttf', 20)
 
 # Get a PIL Draw object to start drawing on the display buffer.
 draw = disp.draw()
@@ -42,7 +63,7 @@ def draw_rotated_text(image, text, position, angle, font, fill=(255,255,255)):
     draw = ImageDraw.Draw(image)
     width, height = draw.textsize(text, font=font)
     # Create a new image with transparent background to store the text.
-    textimage = Image.new('RGBA', (width, height), (0,0,0,0))
+    textimagedestroy = Image.new('RGBA', (width, height), (0,0,0,0))
     # Render the text.
     textdraw = ImageDraw.Draw(textimage)
     textdraw.text((0,0), text, font=font, fill=fill)
@@ -50,10 +71,6 @@ def draw_rotated_text(image, text, position, angle, font, fill=(255,255,255)):
     rotated = textimage.rotate(angle, expand=1)
     # Paste the text into the image, using it as a mask for transparency.
     image.paste(rotated, position, rotated)
-
-# Write two lines of white text on the buffer, rotated 90 degrees counter clockwise.
-draw_rotated_text(disp.buffer, 'Hello World!', (150, 120), 90, font, fill=(255,255,255))
-draw_rotated_text(disp.buffer, 'This is a line of text.', (170, 90), 90, font, fill=(255,255,255))
 
 name='CreditCureDemo'
 target_name='Pixel XL'
@@ -64,6 +81,7 @@ def runServer():
     port = bluetooth.PORT_ANY
     serverSocket.bind(("",port))
     print ('Listening...')
+    blink(LedPin11)
     serverSocket.listen(1)
     port = serverSocket.getsockname()[1]
     bluetooth.advertise_service(serverSocket,
@@ -75,9 +93,16 @@ def runServer():
     print("Accepted connection from ",address)
     data = inputSocket.recv(1024)
     print("received [%s] " % data)
-    draw_rotated_text(disp.buffer, data, (150, 120), 90, font, fill=(255,255,255))
-    draw_rotated_text(disp.buffer, data, (170, 90), 90, font, fill=(255,255,255))
+    blink(LedPin13)
+    # Virtual Credit Card number
+    draw_rotated_text(disp.buffer, data, (35, 35), 90, font, fill=(255,255,255))
+    # Expiration Date
+    draw_rotated_text(disp.buffer, '01/24', (70, 180), 90, font, fill=(255,255,255))
+    # Special Code
+    draw_rotated_text(disp.buffer, '123', (70, 80), 90, font, fill=(255,255,255))
     disp.display()
     inputSocket.close()
     serverSocket.close()
+    destroy()
+setup()
 runServer()
