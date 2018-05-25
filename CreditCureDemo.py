@@ -14,7 +14,8 @@ RST = 23
 SPI_PORT = 0
 SPI_DEVICE = 0
 LedPin11, LedPin13, LedPin15 = 11, 13, 15
-
+pushButton29, pushButton31, pushButton33 = 29, 31, 33
+expenseValue = 0 # Expense Value to Display on LCD
 def setup():
     GPIO.setmode(GPIO.BOARD)       # Numbers GPIOs by physical location
     GPIO.setup(LedPin11, GPIO.OUT)   # Set LedPin's mode is output
@@ -23,6 +24,9 @@ def setup():
     GPIO.output(LedPin11, GPIO.LOW) # Set LedPin high(+3.3V) to turn on led
     GPIO.output(LedPin13, GPIO.LOW)  # led on
     GPIO.output(LedPin15, GPIO.LOW)  # led on
+    GPIO.setup(pushButton29, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(pushButton31, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(pushButton33, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 def blink(led):
   while True:
@@ -35,7 +39,22 @@ def destroy():
     GPIO.output(LedPin13, GPIO.LOW)  # led off
     GPIO.output(LedPin15, GPIO.LOW)  # led off
     GPIO.cleanup()                  # Release resource
-
+def expense():
+    while True:
+    onesDigit = GPIO.input(pushButton29)
+    tensDigit = GPIO.input(pushButton31)
+    send = GPIO.input(pushButton33)
+    if (onesDigit == False):
+        expenseValue += 1
+        refreshCardImage()
+    if (tensDigit == False):
+        expenseValue += 10
+        refreshCardImage()
+    if (send == False):
+        refreshCardImage()
+        break
+    time.sleep(0.3)
+    
 # Create TFT LCD display class.
 disp = TFT.ILI9341(DC, rst=RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=64000000))
 
@@ -71,7 +90,18 @@ def draw_rotated_text(image, text, position, angle, font, fill=(255,255,255)):
     rotated = textimage.rotate(angle, expand=1)
     # Paste the text into the image, using it as a mask for transparency.
     image.paste(rotated, position, rotated)
-
+    
+def refreshCardImage():
+    disp.clear((102, 153, 204))
+    # Virtual Credit Card number
+    draw_rotated_text(disp.buffer, data, (35, 35), 90, font, fill=(255,255,255))
+    # Expiration Date
+    draw_rotated_text(disp.buffer, '01/24', (70, 180), 90, font, fill=(255,255,255))
+    # Special Code
+    draw_rotated_text(disp.buffer, '123', (70, 80), 90, font, fill=(255,255,255))
+    # Expense
+    draw_rotated_text(disp.buffer, 'Expense: ' + str(sendValue), (100, 80), 90, font, fill=(255,255,255))
+    
 name='CreditCureDemo'
 target_name='Pixel XL'
 uuid='00001101-0000-1000-8000-012321232123'
@@ -100,6 +130,10 @@ def runServer():
     draw_rotated_text(disp.buffer, '01/24', (70, 180), 90, font, fill=(255,255,255))
     # Special Code
     draw_rotated_text(disp.buffer, '123', (70, 80), 90, font, fill=(255,255,255))
+    # Expense
+    draw_rotated_text(disp.buffer, 'Expense: ' + str(sendValue), (100, 80), 90, font, fill=(255,255,255))
+    blink(LedPin15)
+    expense()
     disp.display()
     inputSocket.close()
     serverSocket.close()

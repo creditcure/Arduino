@@ -61,6 +61,8 @@ draw_rotated_text(disp.buffer, '1234-1234-1234-1234', (35, 35), 90, font, fill=(
 draw_rotated_text(disp.buffer, '01/24', (70, 180), 90, font, fill=(255,255,255))
 # Special Code
 draw_rotated_text(disp.buffer, '123', (70, 80), 90, font, fill=(255,255,255))
+sendValue = 80
+draw_rotated_text(disp.buffer, 'Expense: ' + str(sendValue), (110, 90), 90, font, fill=(255,255,255))
 
 # Write buffer to display hardware, must be called to make things visible on the
 # display!
