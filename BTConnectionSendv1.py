@@ -1,6 +1,6 @@
 import bluetooth
 import time
-import RPi.GPIO as GPIO
+import RPi.GPIO as gpio
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
@@ -13,16 +13,19 @@ DC = 18
 RST = 23
 SPI_PORT = 0
 SPI_DEVICE = 0
-sendValue=0
+
 # Create TFT LCD display class.
 disp = TFT.ILI9341(DC, rst=RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=64000000))
-
+pushButton3, pushButton5, pushButton18 = 3, 5, 40
+gpio.setup(pushButton18, gpio.IN, pull_up_down=gpio.PUD_UP)
+gpio.setup(pushButton3, gpio.IN, pull_up_down=gpio.PUD_UP)
+gpio.setup(pushButton5, gpio.IN, pull_up_down=gpio.PUD_UP)
 # Initialize display.
 disp.begin()
 
 # Clear the display to a red background.
 # Can pass any tuple of red, green, blue values (from 0 to 255 each).
-
+sendValue = 0
 
 # Alternatively can clear to a black screen by calling:
 # disp.clear()
@@ -64,8 +67,38 @@ draw_rotated_text(disp.buffer, '06/23', (70, 180), 90, font, fill=(255,255,255))
 draw_rotated_text(disp.buffer, '834', (70, 80), 90, font, fill=(255,255,255))
 draw_rotated_text(disp.buffer, "Waiting for Connection...", (200, 30), 90, font, fill=(255,255,255))
 disp.display()
-
+def refresh(data=[], sendValue=0):
+    disp.clear((102, 153, 204))
+    # Virtual Credit Card number
+    draw_rotated_text(disp.buffer, data[0], (35, 35), 90, font, fill=(255,255,255))
+    # Expiration Date
+    draw_rotated_text(disp.buffer, data[1], (70, 180), 90, font, fill=(255,255,255))
+    # Special Code
+    draw_rotated_text(disp.buffer, data[2], (70, 80), 90, font, fill=(255,255,255))
+    draw_rotated_text(disp.buffer, 'Expense: ' + str(sendValue), (110, 90), 90, font, fill=(255,255,255))
+    disp.display() 
+def expense(data, sendValue):
+    ### refresh image
+    refresh(data)
+    while True:
+        onesDigit = gpio.input(pushButton18)
+        tensDigit = gpio.input(pushButton5)
+        send = gpio.input(pushButton3)
+        print "in while loop"
+        if (onesDigit == False):
+            sendValue += 1
+            print(sendValue)
+            refresh(data, sendValue)
+        if (tensDigit == False):
+            sendValue += 10
+            print(sendValue)
+            refresh(data, sendValue)
+        if (send == False):
+            break
+        time.sleep(0.3)
+        
 def runServer():
+    sendValue=0
     serverSocket=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
     port = bluetooth.PORT_ANY
     serverSocket.bind(("",port))
@@ -82,14 +115,17 @@ def runServer():
     data = inputSocket.recv(1024)
     print("received [%s] " % data)
     data=data.split()
+    print(data)
     disp.clear((102, 153, 204))
-    # Real Credit Card number
+    disp.display() 
+    # Virtual Credit Card number
     draw_rotated_text(disp.buffer, data[0], (35, 35), 90, font, fill=(255,255,255))
     # Expiration Date
     draw_rotated_text(disp.buffer, data[1], (70, 180), 90, font, fill=(255,255,255))
     # Special Code
     draw_rotated_text(disp.buffer, data[2], (70, 80), 90, font, fill=(255,255,255))
     draw_rotated_text(disp.buffer, 'Expense: ' + str(sendValue), (110, 90), 90, font, fill=(255,255,255))
+    expense(data, 0)
     disp.display()
     inputSocket.close()
     serverSocket.close()
