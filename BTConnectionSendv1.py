@@ -129,7 +129,7 @@ def runServer():
         draw_rotated_text(disp.buffer, "Connected. Waiting for Virtual Card...", (200, 30), 90, font, fill=(255,255,255))
         draw_rotated_text(disp.buffer, 'Main Menu', (180, 50), 90, font, fill=(255,255,255))
         disp.display()
-        if (addCard == False):
+        if (addCard == False): # Create virtual card for new transaction
             print('adding card')
             data = inputSocket.recv(1024)
             print("received [%s] " % data)
@@ -139,15 +139,18 @@ def runServer():
             exp = expense(data, 0)
             disp.display()
             # Virtual Credit Card number
+            disp.clear((102, 153, 204))
             draw_rotated_text(disp.buffer, data[0], (35, 35), 90, font, fill=(255,255,255))
             # Expiration Date
             draw_rotated_text(disp.buffer, data[1], (70, 180), 90, font, fill=(255,255,255))
             # Special Code
             draw_rotated_text(disp.buffer, data[2], (70, 80), 90, font, fill=(255,255,255))
-            draw_rotated_text(disp.buffer, 'Expense: ' + str(sendValue), (110, 90), 90, font, fill=(255,255,255))
+            draw_rotated_text(disp.buffer, 'Transaction: ' + str(exp), (110, 90), 90, font, fill=(255,255,255))
             disp.display()
             print(exp)
             inputSocket.send(str(exp).encode())
+            while(gpio.input(pushButton5)): # Another transaction? click to continue
+                continue
         if (end == False):
             cont = False
             break
