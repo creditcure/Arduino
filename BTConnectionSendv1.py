@@ -69,13 +69,14 @@ draw_rotated_text(disp.buffer, "Waiting for Connection...", (200, 30), 90, font,
 disp.display()
 def refresh(data=[], sendValue=0):
     disp.clear((102, 153, 204))
-    # Virtual Credit Card number
-    draw_rotated_text(disp.buffer, data[0], (35, 35), 90, font, fill=(255,255,255))
-    # Expiration Date
-    draw_rotated_text(disp.buffer, data[1], (70, 180), 90, font, fill=(255,255,255))
-    # Special Code
-    draw_rotated_text(disp.buffer, data[2], (70, 80), 90, font, fill=(255,255,255))
+##    # Virtual Credit Card number
+##    draw_rotated_text(disp.buffer, data[0], (35, 35), 90, font, fill=(255,255,255))
+##    # Expiration Date
+##    draw_rotated_text(disp.buffer, data[1], (70, 180), 90, font, fill=(255,255,255))
+##    # Special Code
+##    draw_rotated_text(disp.buffer, data[2], (70, 80), 90, font, fill=(255,255,255))
     draw_rotated_text(disp.buffer, 'Expense: ' + str(sendValue), (110, 90), 90, font, fill=(255,255,255))
+    draw_rotated_text(disp.buffer, 'Expense Mode', (180, 50), 90, font, fill=(255,255,255))
     disp.display() 
 def expense(data, sendValue):
     ### refresh image
@@ -84,7 +85,7 @@ def expense(data, sendValue):
         onesDigit = gpio.input(pushButton18)
         tensDigit = gpio.input(pushButton5)
         send = gpio.input(pushButton3)
-        print "in while loop"
+        print "in expense while loop"
         if (onesDigit == False):
             sendValue += 1
             print(sendValue)
@@ -113,22 +114,49 @@ def runServer():
                       profiles = [bluetooth.SERIAL_PORT_PROFILE])
     inputSocket, address=serverSocket.accept()
     print("Accepted connection from ",address)
-    data = inputSocket.recv(1024)
-    print("received [%s] " % data)
-    data=data.split()
-    print(data)
-    disp.clear((102, 153, 204))
-    disp.display() 
-    # Virtual Credit Card number
-    draw_rotated_text(disp.buffer, data[0], (35, 35), 90, font, fill=(255,255,255))
-    # Expiration Date
-    draw_rotated_text(disp.buffer, data[1], (70, 180), 90, font, fill=(255,255,255))
-    # Special Code
-    draw_rotated_text(disp.buffer, data[2], (70, 80), 90, font, fill=(255,255,255))
-    draw_rotated_text(disp.buffer, 'Expense: ' + str(sendValue), (110, 90), 90, font, fill=(255,255,255))
-    exp = expense(data, 0)
-    disp.display()
-    print(exp)
-    inputSocket.send(str(exp).encode())
+    cont = True
+    while cont:
+        addCard = gpio.input(pushButton5)
+        end = gpio.input(pushButton3)
+        print "in add card loop"
+        disp.clear((102, 153, 204))
+        # Real Credit Card number
+        draw_rotated_text(disp.buffer, '4257-3362-0891-2361', (35, 35), 90, font, fill=(255,255,255))
+        # Expiration Date
+        draw_rotated_text(disp.buffer, '06/23', (70, 180), 90, font, fill=(255,255,255))
+        # Special Code
+        draw_rotated_text(disp.buffer, '834', (70, 80), 90, font, fill=(255,255,255))
+        draw_rotated_text(disp.buffer, "Connected. Waiting for Virtual Card...", (200, 30), 90, font, fill=(255,255,255))
+        draw_rotated_text(disp.buffer, 'Main Menu', (180, 50), 90, font, fill=(255,255,255))
+        disp.display()
+        if (addCard == False):
+            print('adding card')
+            data = inputSocket.recv(1024)
+            print("received [%s] " % data)
+            data=data.split()
+            print(data)
+            disp.clear((102, 153, 204))
+            exp = expense(data, 0)
+            disp.display()
+            # Virtual Credit Card number
+            draw_rotated_text(disp.buffer, data[0], (35, 35), 90, font, fill=(255,255,255))
+            # Expiration Date
+            draw_rotated_text(disp.buffer, data[1], (70, 180), 90, font, fill=(255,255,255))
+            # Special Code
+            draw_rotated_text(disp.buffer, data[2], (70, 80), 90, font, fill=(255,255,255))
+            draw_rotated_text(disp.buffer, 'Expense: ' + str(sendValue), (110, 90), 90, font, fill=(255,255,255))
+            disp.display()
+            print(exp)
+            inputSocket.send(str(exp).encode())
+        if (end == False):
+            cont = False
+            break
+        time.sleep(0.3)
+    inputSocket.close()
     serverSocket.close()
+    # Exit Screen
+    disp.clear((102, 153, 204))
+    draw_rotated_text(disp.buffer, 'Thank you for choosing', (35, 35), 90, font, fill=(255,255,255))
+    draw_rotated_text(disp.buffer, 'CreditCure!', (70, 100), 90, font, fill=(255,255,255))
+    disp.display()
 runServer()
