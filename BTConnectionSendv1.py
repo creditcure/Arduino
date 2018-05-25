@@ -36,7 +36,7 @@ font = ImageFont.load_default()
 # Alternatively load a TTF font.
 # Some other nice fonts to try: http://www.dafont.com/bitmap.php
 #font = ImageFont.truetype('Minecraftia.ttf', 46)
-font = ImageFont.truetype('verdana.ttf', 20)
+font = ImageFont.truetype('/home/pi/Desktop/Hardware/verdana.ttf', 20)
 # Get a PIL Draw object to start drawing on the display buffer.
 draw = disp.draw()
 
